@@ -2,7 +2,7 @@
 outlook_folder: "Inbox"
 
 # Regex pattern for the email subject to filter out irrelevant emails
-subject_regex: "^(?i)(alert|warning|critical|issue)"
+subject_regex: "(?i)^(alert|warning|critical|issue)"
 
 # Polling interval in seconds
 poll_interval: 60

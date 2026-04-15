@@ -10,7 +10,7 @@ if config_path.exists():
     with open(config_path, "r") as f:
         CONFIG = yaml.safe_load(f)
 else:
-    CONFIG = {"outlook_folder": "Inbox", "subject_regex": "^(?i)(alert|warning|critical|issue)"}
+    CONFIG = {"outlook_folder": "Inbox", "subject_regex": "(?i)^(alert|warning|critical|issue)"}
 
 def get_outlook_folder(namespace, folder_path: str):
     """
