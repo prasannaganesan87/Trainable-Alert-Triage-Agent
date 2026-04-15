@@ -1,0 +1,9 @@
+pywin32
+typer
+rich
+pydantic
+python-dotenv
+rapidfuzz
+pyyaml
+requests
+boto3

@@ -1,0 +1,19 @@
+# Outlook folder to monitor (e.g., "Inbox", or "Inbox/Alerts")
+outlook_folder: "Inbox"
+
+# Regex pattern for the email subject to filter out irrelevant emails
+subject_regex: "^(?i)(alert|warning|critical|issue)"
+
+# Polling interval in seconds
+poll_interval: 60
+
+# Thresholds for Phase 3 (Auto Mode)
+auto_mode_threshold: 0.85
+min_examples_required: 30
+
+# LLM Configuration
+llm_provider: "gemini" # or "bedrock"
+model_name: "gemini-1.5-pro-latest" # Adjust based on provider
+
+# Optional shift hours (e.g. "09:00-17:00")
+shift_hours: "09:00-17:00"
