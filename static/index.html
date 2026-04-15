@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRE Alert Triage</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Email List -->
+        <aside class="sidebar glass">
+            <div class="sidebar-header">
+                <h2>Dynatrace Alerts</h2>
+                <button id="refresh-btn" class="icon-btn" title="Refresh">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 2.6-6.4L2 9"/></svg>
+                </button>
+            </div>
+            <div id="email-list" class="email-list">
+                <!-- Emails injected here -->
+            </div>
+        </aside>
+
+        <!-- Main Stage: Reading Pane -->
+        <main class="reading-pane glass" id="reading-pane">
+            <div class="empty-state" id="empty-state">
+                <p>Select an alert to view its details</p>
+            </div>
+
+            <div class="email-content hidden" id="email-content">
+                <header class="email-header">
+                    <h1 id="mail-subject">Subject goes here</h1>
+                    <span id="mail-time" class="time-stamp">Time</span>
+                </header>
+                
+                <div class="email-body-container">
+                    <!-- HTML body if available, otherwise raw text -->
+                    <div id="mail-body"></div>
+                </div>
+
+                <div class="triage-panel glass-dark">
+                    <div class="ai-suggestion hidden" id="ai-suggestion-box">
+                        <span class="ai-badge">AI Assist</span>
+                        <div class="ai-details">
+                            <strong id="ai-decision">Check (95%)</strong>
+                            <p id="ai-reason">The CPU utilization is over 99%</p>
+                        </div>
+                    </div>
+
+                    <h3>Triage Decision</h3>
+                    <div class="triage-actions">
+                        <button class="btn btn-check" id="btn-check">Check</button>
+                        <button class="btn btn-ignore" id="btn-ignore">Ignore</button>
+                    </div>
+                    
+                    <textarea id="triage-comment" placeholder="Optional reasoning or comments for this decision..." rows="2"></textarea>
+                    
+                    <div class="status-msg" id="triage-status"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

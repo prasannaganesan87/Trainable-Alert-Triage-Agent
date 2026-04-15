@@ -1,11 +1,14 @@
 # Outlook folder to monitor (e.g., "Inbox", or "Inbox/Alerts")
-outlook_folder: "Inbox"
+outlook_folder: "Inbox/SRE/Dynatrace alerts"
 
 # Regex pattern for the email subject to filter out irrelevant emails
-subject_regex: "(?i)^(alert|warning|critical|issue)"
+subject_regex: ""
 
 # Polling interval in seconds
 poll_interval: 60
+
+# How far back to look for new emails (in minutes).
+filter_minutes: 60
 
 # Thresholds for Phase 3 (Auto Mode)
 auto_mode_threshold: 0.85

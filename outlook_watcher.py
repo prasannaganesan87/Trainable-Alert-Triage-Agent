@@ -41,7 +41,9 @@ def fetch_recent_unread_emails() -> list:
     Connects to Outlook and returns unread emails matching the subject regex
     and received within the last 5 minutes.
     """
+    import pythoncom
     try:
+        pythoncom.CoInitialize()
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
     except Exception as e:
         print(f"Failed to connect to Outlook: {e}")
@@ -57,9 +59,10 @@ def fetch_recent_unread_emails() -> list:
     subject_pattern = CONFIG.get("subject_regex", "")
     regex = re.compile(subject_pattern) if subject_pattern else None
 
-    # Calculate 5 minutes ago in UTC and local (some systems behave differently with pywin32 dates)
+    # Lookback window for emails
+    lookback_minutes = int(CONFIG.get("filter_minutes", 60))
     now = datetime.datetime.now(datetime.timezone.utc)
-    five_mins_ago = now - datetime.timedelta(minutes=5)
+    time_limit = now - datetime.timedelta(minutes=lookback_minutes)
     
     recent_emails = []
     
@@ -74,7 +77,7 @@ def fetch_recent_unread_emails() -> list:
             if received_time.tzinfo is None:
                 received_time = received_time.replace(tzinfo=datetime.timezone.utc)
                 
-            if received_time < five_mins_ago:
+            if received_time < time_limit:
                 # Since we sorted descending, the moment we hit an older email, we can break
                 break
 
@@ -82,10 +85,16 @@ def fetch_recent_unread_emails() -> list:
                 subject = item.Subject or ""
                 # Check regex
                 if not regex or regex.search(subject):
+                    try:
+                        html_body = item.HTMLBody
+                    except:
+                        html_body = ""
+                    
                     recent_emails.append({
                         "entry_id": item.EntryID,
                         "subject": subject,
                         "body": item.Body or "",
+                        "html_body": html_body,
                         "received_time": received_time.isoformat()
                     })
         except Exception as e:
