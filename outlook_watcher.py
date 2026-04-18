@@ -18,22 +18,29 @@ def get_outlook_folder(namespace, folder_path: str):
     folder_path could be just 'Inbox' or 'Inbox/Alerts'.
     """
     try:
-        # Default to Inbox (6 = olFolderInbox)
-        folder = namespace.GetDefaultFolder(6)
-        
         parts = folder_path.replace("\\", "/").split("/")
+        
         if parts[0].lower() == "inbox":
+            folder = namespace.GetDefaultFolder(6)
             parts = parts[1:]
         elif parts[0].lower() == "deleted items":
             folder = namespace.GetDefaultFolder(3)
             parts = parts[1:]
-            
+        else:
+            try:
+                # Try from root namespace if not Inbox
+                folder = namespace.Folders.Item(parts[0])
+                parts = parts[1:]
+            except Exception:
+                # Fallback to Inbox
+                folder = namespace.GetDefaultFolder(6)
+                
         for part in parts:
             if part:
                 folder = folder.Folders.Item(part)
         return folder
     except Exception as e:
-        print(f"Error accessing folder {folder_path}: {e}")
+        print(f"Error accessing folder '{folder_path}' (Are you sure it exists exactly as spelled?): {e}")
         return None
 
 def fetch_recent_unread_emails() -> list:
@@ -61,46 +68,63 @@ def fetch_recent_unread_emails() -> list:
 
     # Lookback window for emails
     lookback_minutes = int(CONFIG.get("filter_minutes", 60))
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now()
     time_limit = now - datetime.timedelta(minutes=lookback_minutes)
+    
+    # Format time limit for Outlook Classic Restrict: "MM/DD/YYYY HH:MM AM"
+    time_filter_str = time_limit.strftime("%m/%d/%Y %I:%M %p")
+    
+    try:
+        # Offload filtering directly to Outlook Classic's COM interface
+        restricted_items = folder.Items.Restrict(f"[UnRead] = True AND [ReceivedTime] >= '{time_filter_str}'")
+        restricted_items.Sort("[ReceivedTime]", True)
+    except Exception as e:
+        print(f"Error applying restriction in Outlook Classic: {e}")
+        restricted_items = folder.Items
+        restricted_items.Sort("[ReceivedTime]", True)
     
     recent_emails = []
     
-    for item in items:
-        # Filter only MailItems (Class = 43)
-        if item.Class != 43:
-            continue
-            
+    for item in restricted_items:
         try:
-            received_time = item.ReceivedTime
-            # Make timezone aware if it's not
-            if received_time.tzinfo is None:
-                received_time = received_time.replace(tzinfo=datetime.timezone.utc)
+            # We intentionally skip the class checking (item.Class != 43) because 
+            # some internal system alerts arrive as ReportItems or custom classes.
+            subject = getattr(item, "Subject", "")
+            if not subject:
+                continue
                 
-            if received_time < time_limit:
-                # Since we sorted descending, the moment we hit an older email, we can break
-                break
-
-            if item.UnRead:
-                subject = item.Subject or ""
-                # Check regex
-                if not regex or regex.search(subject):
-                    try:
-                        html_body = item.HTMLBody
-                    except:
-                        html_body = ""
-                    
-                    recent_emails.append({
-                        "entry_id": item.EntryID,
-                        "subject": subject,
-                        "body": item.Body or "",
-                        "html_body": html_body,
-                        "received_time": received_time.isoformat()
-                    })
+            if regex and not regex.search(subject):
+                continue
+                
+            try:
+                html_body = item.HTMLBody
+            except Exception:
+                html_body = ""
+                
+            try:
+                body = item.Body or ""
+            except Exception:
+                body = ""
+                
+            try:
+                rt = item.ReceivedTime
+                rt_iso = rt.isoformat() if hasattr(rt, 'isoformat') else str(rt)
+            except Exception:
+                rt_iso = datetime.datetime.now().isoformat()
+                
+            # If the fallback loop triggers, double check unread flag
+            if not getattr(item, "UnRead", False):
+                continue
+            
+            recent_emails.append({
+                "entry_id": getattr(item, "EntryID", "unknown"),
+                "subject": subject,
+                "body": body,
+                "html_body": html_body,
+                "received_time": rt_iso
+            })
         except Exception as e:
-            print(f"Error processing item: {e}")
             continue
 
-    # Reverse to process oldest to newest within the 5 minute window
     recent_emails.reverse()
     return recent_emails

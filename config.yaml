@@ -8,7 +8,7 @@ subject_regex: ""
 poll_interval: 60
 
 # How far back to look for new emails (in minutes).
-filter_minutes: 60
+filter_minutes: 600
 
 # Thresholds for Phase 3 (Auto Mode)
 auto_mode_threshold: 0.85
